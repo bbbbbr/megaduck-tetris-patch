@@ -1,6 +1,7 @@
 tetris.gb
 tetris.map
 tetris.sym
+tetris.duck
 temp.s
 
 __pycache__/
