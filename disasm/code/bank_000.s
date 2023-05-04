@@ -7,6 +7,7 @@ INCLUDE "includes.s"
 
 SECTION "ROM Bank $000", ROM0[$0]
 
+; MegaDuck Entry point, conviently already jumps to startup
 RST_00::
 	jp   Begin2                                                     ; $0000
 
@@ -176,40 +177,57 @@ Boot::
 	nop                                                             ; $0100
 	jp   Begin                                                      ; $0101
 
-	
-SECTION "Header", ROM0[$134]
 
-	setcharmap main
+IF DEF(TARGET_MEGADUCK)
+	; MegaDuck does not have a header
+	; which frees up a little space for other code
 
-HeaderTitle::
-	db   "TETRIS", $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+	; $104 - $109: 6 bytes
+	; SECTION "Sound Thunk Funcs", ROM0[$104]
 
-	setcharmap new
+    ; $10A - $129: 48 bytes
+    ; SECTION "Demo Pieces", ROM0[$10A]
 
-HeaderNewLicenseeCode::
-	db   $00, $00
+	; $12A - $14F
+	; Unused
 
-HeaderSGBFlag::
-	db   $00
+		setcharmap main
 
-HeaderCartridgeType::
-	db   $00
+		setcharmap new
+ELSE
+	SECTION "Header", ROM0[$134]
 
-HeaderROMSize::
-	db   $00
+		setcharmap main
 
-HeaderRAMSize::
-	db   $00
+	HeaderTitle::
+		db   "TETRIS", $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
 
-HeaderDestinationCode::
-	db   $00
+		setcharmap new
 
-HeaderOldLicenseeCode::
-	db   $01
+	HeaderNewLicenseeCode::
+		db   $00, $00
 
-HeaderMaskROMVersion::
-	db   $01
+	HeaderSGBFlag::
+		db   $00
 
+	HeaderCartridgeType::
+		db   $00
+
+	HeaderROMSize::
+		db   $00
+
+	HeaderRAMSize::
+		db   $00
+
+	HeaderDestinationCode::
+		db   $00
+
+	HeaderOldLicenseeCode::
+		db   $01
+
+	HeaderMaskROMVersion::
+		db   $01
+ENDC
 
 SECTION "Begin", ROM0[$150]
 

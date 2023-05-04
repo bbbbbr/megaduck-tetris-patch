@@ -55,8 +55,14 @@ Demo1Inputs:
 	db $00, $00, $10, $3d, $00, $05, $80, $1f
 	
 
-
-SECTION "Demo Pieces", ROMX[$6450], BANK[$1]
+IF DEF(TARGET_MEGADUCK)
+    ; #MD Free up a little space by relocating these to empty
+    ; space where the Header would be on a real Game Boy
+    ; $10A - $129: 48 bytes
+    SECTION "Demo Pieces", ROM0[$10A]
+ELSE
+    SECTION "Demo Pieces", ROMX[$6450], BANK[$1]
+ENDC
 
 DemoPieces::
 ; demo 2

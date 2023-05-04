@@ -1,6 +1,12 @@
 INCLUDE "includes.s"
 
-SECTION "Sound Engine", ROMX[$6480], BANK[$1]
+IF DEF(TARGET_MEGADUCK)
+    ; #MD Move sound engine up a little to use space
+    ; reclaimed by moving "Demo Pieces" to the Header area
+	SECTION "Sound Engine", ROMX[$6450], BANK[$1]
+ELSE
+	SECTION "Sound Engine", ROMX[$6480], BANK[$1]
+ENDC
 
 SquareSoundEffectTable_Init:
 	dw SquareEffectInit_MovingSelection
@@ -22,7 +28,7 @@ SquareSoundEffectTable_Update:
 	dw SquareEffectUpdate_4LinesCleared
 	dw SquareEffectUpdate_ReachedNextLevel
 
-	
+
 NoiseSoundEffect_Init:
 	dw NoiseEffectInit_TetrisRowsFell
 	dw NoiseEffectInit_PieceHitFloor
@@ -190,11 +196,11 @@ UpdateSound:
 
 Aud2RegVals_Pause1:
 	db $b2, $e3, $83, $c7
-	
+
 
 Aud2RegVals_Pause2:
 	db $b2, $e3, $c1, $c7
-	
+
 
 IsSoundEffect_MovingSelection:
 	ld   a, [wWavEffectBeingPlayed]                                 ; $6583
@@ -226,7 +232,7 @@ Aud1RegValsInit_MovingSelection:
 
 Aud1RegValsUpdate_MovingSelection:
 	db $00, $b5, $20, $40, $c7
-	
+
 
 Aud1RegValsInit_ConfirmOrLetterTyped:
 	db $00, $b6, $a1, $80, $c7
@@ -273,14 +279,21 @@ SquareEffectUpdate_Common:
 ClearAud1RegsAndVars:
 	xor  a                                                          ; $65d3
 	ld   [wSquareEffectBeingPlayed], a                              ; $65d4
+; #MD OK?
 	ldh  [rAUD1SWEEP], a                                            ; $65d7
 
 ; default envelope: increase
 	ld   a, $08                                                     ; $65d9
+; #MD NR12 OK?
+IF DEF(TARGET_MEGADUCK)
+	; NR12: Need to nybble swap output
+	swap a
+ENDC
 	ldh  [rAUD1ENV], a                                              ; $65db
 
 ; default high: restart sound
 	ld   a, $80                                                     ; $65dd
+; #MD OK?
 	ldh  [rAUD1HIGH], a                                             ; $65df
 
 ; sound effect no longer taking over
@@ -370,9 +383,9 @@ Aud1RegVals_ReachedNextLevel_0and4:
 
 
 Aud1RegVals_ReachedNextLevel_1:
-	db $00, $b0, $f1, $c4, $c7 
-	
-	
+	db $00, $b0, $f1, $c4, $c7
+
+
 Aud1RegVals_ReachedNextLevel_2:
 	db $00, $b0, $f1, $ce, $c7
 
@@ -439,8 +452,8 @@ SquareEffectUpdate_ReachedNextLevel:
 
 Aud1RegValsInit_Non4LinesCleared:
 	db $3e, $80, $e3, $00, $c4
-	
-	
+
+
 Aud1EnvData_Non4LinesCleared:
 	db $93, $83, $83, $73, $63, $53, $43, $33, $23, $13, $00
 
@@ -497,12 +510,20 @@ SquareEffectUpdate_Non4LinesCleared:
 SetAud1EnvLowHighToEDB:
 	ld   c, LOW(rAUD1ENV)                                           ; $66e1
 	ld   a, e                                                       ; $66e3
+; #MD NR12 OK?
+IF DEF(TARGET_MEGADUCK)
+	; NR12: Need to nybble swap output
+	swap a
+ENDC
 	ldh  [c], a                                                     ; $66e4
 	inc  c                                                          ; $66e5
 	ld   a, d                                                       ; $66e6
+
+; #MD NR13 OK?
 	ldh  [c], a                                                     ; $66e7
 	inc  c                                                          ; $66e8
 	ld   a, b                                                       ; $66e9
+; #MD NR14 OK?
 	ldh  [c], a                                                     ; $66ea
 	ret                                                             ; $66eb
 
@@ -595,11 +616,11 @@ Aud4RegValsInit_TetrisRowsFell:
 
 Aud4RegValsInit_RocketGas:
 	db $00, $d5, $65, $80
-	
-	
+
+
 Aud4RegValsInit_RocketFire:
 	db $00, $70, $66, $80
-	
+
 
 Aud4RegValsUpdate_RocketFire_Poly:
 	db $65, $65, $65, $64, $57, $56
@@ -652,6 +673,11 @@ NoiseEffectUpdate_RocketFire:
 	ld   hl, Aud4RegValsUpdate_RocketFire_Poly                      ; $67c0
 	add  hl, bc                                                     ; $67c3
 	ld   a, [hl]                                                    ; $67c4
+; #MD OK?
+IF DEF(TARGET_MEGADUCK)
+    ; NR43: Need to nybble swap output
+    swap a
+ENDC
 	ldh  [rAUD4POLY], a                                             ; $67c5
 
 ; second table in env
@@ -659,10 +685,15 @@ NoiseEffectUpdate_RocketFire:
 	ld   hl, Aud4RegValsUpdate_RocketFire_Env                       ; $67c8
 	add  hl, bc                                                     ; $67cb
 	ld   a, [hl]                                                    ; $67cc
+IF DEF(TARGET_MEGADUCK)
+    ; NR42: Need to nybble swap output
+    swap a
+ENDC
 	ldh  [rAUD4ENV], a                                              ; $67cd
 
 ; restart sound
 	ld   a, $80                                                     ; $67cf
+; #MD OK?
 	ldh  [rAUD4GO], a                                               ; $67d1
 	ret                                                             ; $67d3
 
@@ -692,6 +723,10 @@ NoiseEffectUpdate_ClearNoise:
 
 ; default increase
 	ld   a, $08                                                     ; $67ed
+IF DEF(TARGET_MEGADUCK)
+    ; NR42: Need to nybble swap output
+    swap a
+ENDC
 	ldh  [rAUD4ENV], a                                              ; $67ef
 
 ; restart sound
@@ -706,8 +741,8 @@ NoiseEffectUpdate_ClearNoise:
 
 Aud3RegValsInit_GameOver:
 	db $80, $3a, $20, $60, $c6
-	
-	
+
+
 WavEffectInit_GameOver:
 	ld   hl, WavRam_Init_GameOver                                   ; $6800
 	call InitWavEffect_pauseOtherChannels                           ; $6803
@@ -748,6 +783,7 @@ WavEffectUpdate_GameOver:
 	ld   a, [hl]                                                    ; $682a
 	and  $f0                                                        ; $682b
 	or   b                                                          ; $682d
+; #MD OK?
 	ld   c, LOW(rAUD3LOW)                                           ; $682e
 	ldh  [c], a                                                     ; $6830
 	ret                                                             ; $6831
@@ -900,13 +936,15 @@ WavEffectUpdate_After4LinesCleared:
 
 .setLowVal:
 	ld   a, [hl]                                                    ; $68de
+; #MD OK?
 	ldh  [rAUD3LOW], a                                              ; $68df
 	ret                                                             ; $68e1
 
-	
+
 ClearWavVarsAndRegs_ResumeMusic:
 	xor  a                                                          ; $68e2
 	ld   [wWavEffectBeingPlayed], a                                 ; $68e3
+; #MD OK?
 	ldh  [rAUD3ENA], a                                              ; $68e6
 
 ; resume music
@@ -947,6 +985,7 @@ InitWavEffect_pauseOtherChannels:
 	ld   [wWavEffectMiscCounter], a                                 ; $6917
 	ld   [wWavEffectShouldIncOrDec], a                              ; $691a
 	ld   [wWavEffectCurrLoVal], a                                   ; $691d
+; #MD OK?
 	ldh  [rAUD3ENA], a                                              ; $6920
 
 ; prevent other channels from playing at the same time as a wav effect
@@ -979,7 +1018,7 @@ SetInitialRegValuesHLForSoundEffect_UpdateDelayA:
 	inc  e                                                          ; $693e
 	ld   [de], a                                                    ; $693f
 
-; 0 in [de] frame counter, [de+2] misc counter and 
+; 0 in [de] frame counter, [de+2] misc counter and
 ; [de+3] misc var 1, eg wav's should inc/dev or random val
 	dec  e                                                          ; $6940
 	xor  a                                                          ; $6941
@@ -1006,43 +1045,125 @@ SetInitialRegValuesHLForSoundEffect_UpdateDelayA:
 	ret                                                             ; $6955
 
 
-CopyDefaultValsInHLIntoAud1Regs:
-	push bc                                                         ; $6956
-	ld   c, LOW(rAUD1SWEEP)                                         ; $6957
-	ld   b, rAUD1HIGH-rAUD1SWEEP+1                                  ; $6959
-	jr   CopyDefaultValsInHLIntoAudCRegs                            ; $695b
+IF DEF(TARGET_MEGADUCK)
+																	; Formerly 6956-6977
+	CopyDefaultValsInHLIntoAud1Regs:
+		ld   a, [hl+]
+		ldh  [rNR10], a
+
+		ld   a, [hl+]
+		ldh  [rNR11], a
+
+		; #MD swap nybbles for NR12
+		ld   a, [hl+]
+		swap a
+		ldh  [rNR12], a
+
+		ld   a, [hl+]
+		ldh  [rNR13], a
+
+		ld   a, [hl+]
+		ldh  [rNR14], a
+		ret
+
+	; #MD: This block might never get called? Could just be a RET?
+	CopyDefaultValsInHLIntoAud2Regs:
+		ld   a, [hl+]
+		ldh  [rNR21], a
+
+		; #MD swap nybbles for NR22
+		ld   a, [hl+]
+		swap a
+		ldh  [rNR22], a
+
+		ld   a, [hl+]
+		ldh  [rNR23], a
+
+		ld   a, [hl+]
+		ldh  [rNR14], a
+		ret
 
 
-CopyDefaultValsInHLIntoAud2Regs:
-	push bc                                                         ; $695d
-	ld   c, LOW(rAUD2LEN)                                           ; $695e
-	ld   b, rAUD2HIGH-rAUD2LEN+1                                    ; $6960
-	jr   CopyDefaultValsInHLIntoAudCRegs                            ; $6962
+	; #MD: This block might never get called? Could just be a RET?
+	CopyDefaultValsInHLIntoAud3Regs:
+		ld   a, [hl+]
+		ldh  [rNR30], a
+
+		ld   a, [hl+]
+		ldh  [rNR31], a
+
+		; #MD NR32: Translate volume. New Volume = ((0x00 - Volume) & 0x60)
+		; GB: Bits:6..5 : 00 = mute, 01 = 100%, 10 = 50%, 11 = 25%
+		; MD: Bits:6..5 : 00 = mute, 11 = 100%, 10 = 50%, 01 = 25%
+		ld   a, [hl+]
+		cpl
+		add $20 ; start bit rollover at bit 5 to ignore possible values in lower bits (vs add 1)
+		and $60
+		ldh  [rNR32], a
+
+		ld   a, [hl+]
+		ldh  [rNR33], a
+
+		ld   a, [hl+]
+		ldh  [rNR34], a
+		ret
 
 
-CopyDefaultValsInHLIntoAud3Regs:
-	push bc                                                         ; $6964
-	ld   c, LOW(rAUD3ENA)                                           ; $6965
-	ld   b, rAUD3HIGH-rAUD3ENA+1                                    ; $6967
-	jr   CopyDefaultValsInHLIntoAudCRegs                            ; $6969
+	CopyDefaultValsInHLIntoAud4Regs:
+		ld   a, [hl+]
+		ldh  [rNR41], a
+
+		; #MD swap nybbles for NR42
+		ld   a, [hl+]
+		swap a
+		ldh  [rNR42], a
+
+		; #MD swap nybbles for NR43
+		ld   a, [hl+]
+		swap a
+		ldh  [rNR43], a
+
+		ld   a, [hl+]
+		ldh  [rNR44], a
+		ret
+ELSE
+	CopyDefaultValsInHLIntoAud1Regs:
+		push bc                                                         ; $6956
+		ld   c, LOW(rAUD1SWEEP)                                         ; $6957
+		ld   b, rAUD1HIGH-rAUD1SWEEP+1                                  ; $6959
+		jr   CopyDefaultValsInHLIntoAudCRegs                            ; $695b
 
 
-CopyDefaultValsInHLIntoAud4Regs:
-	push bc                                                         ; $696b
-	ld   c, LOW(rAUD4LEN)                                           ; $696c
-	ld   b, rAUD4GO-rAUD4LEN+1                                      ; $696e
+	CopyDefaultValsInHLIntoAud2Regs:
+		push bc                                                         ; $695d
+		ld   c, LOW(rAUD2LEN)                                           ; $695e
+		ld   b, rAUD2HIGH-rAUD2LEN+1                                    ; $6960
+		jr   CopyDefaultValsInHLIntoAudCRegs                            ; $6962
 
-CopyDefaultValsInHLIntoAudCRegs:
-.loop:
-	ld   a, [hl+]                                                   ; $6970
-	ldh  [c], a                                                     ; $6971
-	inc  c                                                          ; $6972
-	dec  b                                                          ; $6973
-	jr   nz, .loop                                                  ; $6974
 
-	pop  bc                                                         ; $6976
-	ret                                                             ; $6977
+	CopyDefaultValsInHLIntoAud3Regs:
+		push bc                                                         ; $6964
+		ld   c, LOW(rAUD3ENA)                                           ; $6965
+		ld   b, rAUD3HIGH-rAUD3ENA+1                                    ; $6967
+		jr   CopyDefaultValsInHLIntoAudCRegs                            ; $6969
 
+
+	CopyDefaultValsInHLIntoAud4Regs:
+		push bc                                                         ; $696b
+		ld   c, LOW(rAUD4LEN)                                           ; $696c
+		ld   b, rAUD4GO-rAUD4LEN+1                                      ; $696e
+
+	CopyDefaultValsInHLIntoAudCRegs:
+	.loop:
+		ld   a, [hl+]                                                   ; $6970
+		ldh  [c], a                                                     ; $6971
+		inc  c                                                          ; $6972
+		dec  b                                                          ; $6973
+		jr   nz, .loop                                                  ; $6974
+
+		pop  bc                                                         ; $6976
+		ret                                                             ; $6977
+ENDC
 
 StoreOrigSoundEffectIdx_HLequAddressForSongData_tableHL_incEtwice:
 	inc  e                                                          ; $6978
@@ -1094,6 +1215,7 @@ IncCounterInDE_retZifHitsThreshold:
 
 CopyFromHLintoWav3Ram:
 	push bc                                                         ; $6998
+; #MD OK?
 	ld   c, LOW(_AUD3WAVERAM)                                       ; $6999
 
 .loop:
@@ -1122,6 +1244,7 @@ InitSound:
 
 ; output to all terminals
 	ld   a, $ff                                                     ; $69be
+	; #MD OK?
 	ldh  [rAUDTERM], a                                              ; $69c0
 
 ; make sure aud term filter func outputs to all
@@ -1131,6 +1254,11 @@ InitSound:
 ResetSoundHwRegs:
 ; default env (increase)
 	ld   a, $08                                                     ; $69c7
+; #MD OK?
+IF DEF(TARGET_MEGADUCK)
+    ; NR12/NR22/NR42: Need to nybble swap output
+    swap a
+ENDC
 	ldh  [rAUD1ENV], a                                              ; $69c9
 	ldh  [rAUD2ENV], a                                              ; $69cb
 	ldh  [rAUD4ENV], a                                              ; $69cd
@@ -1339,6 +1467,7 @@ SetSongsAudTermRegs:
 	ld   a, b                                                       ; $6aa4
 
 .setAudTerm:
+; #MD OK?
 	ldh  [rAUDTERM], a                                              ; $6aa5
 	ret                                                             ; $6aa7
 
@@ -1475,6 +1604,7 @@ ProcessSoundByte9dh_SetParams:
 
 ; aud 3 off, then copy from DE (1st 2 sound data bytes below) into wav ram
 	xor  a                                                          ; $6b7e
+; #MD OK?
 	ldh  [rAUD3ENA], a                                              ; $6b7f
 	ld   l, e                                                       ; $6b81
 	ld   h, d                                                       ; $6b82
@@ -1587,7 +1717,13 @@ UpdateMusic:
 	jr   nz, .passedWaveEnvelope                                    ; $6be9
 
 ; 50% volume
-	ld   a, $40                                                     ; $6beb
+;		ld   a, $40                                                     ; $6beb
+; #MD OK?
+	; Translate NR32 volume. New Volume = ((0x00 - Volume) & 0x60)
+	; GB: Bits:6..5 : 00 = mute, 01 = 100%, 10 = 50%, 11 = 25%
+	; MD: Bits:6..5 : 00 = mute, 11 = 100%, 10 = 50%, 01 = 25%
+	; Use a constant instead of hard wired $40 (plus, 50% / Medium is the same for both)
+	ld   a, AUDVOL_CH3_MED                                                     ; $6beb
 	ldh  [rAUD3LEVEL], a                                            ; $6bed
 
 .passedWaveEnvelope:
@@ -1824,6 +1960,7 @@ UpdateMusic:
 	jr   nz, .noiseLoop                                             ; $6cca
 
 ; starting hw reg
+; #MD: Load NR41 for afterChoosingSndChannelBaseReg : OK?
 	ld   c, LOW(rAUD4LEN)                                           ; $6ccc
 	ld   hl, wAud4Struct+AUD_AddressOfSoundData                     ; $6cce
 	jr   .afterChoosingSndChannelBaseReg                            ; $6cd1
@@ -1841,6 +1978,7 @@ UpdateMusic:
 	jr   z, .startWritingToSq2                                      ; $6cdd
 
 ; is wave
+; #MD: Load NR31 OK?
 	ld   c, LOW(rAUD3ENA)                                           ; $6cdf
 	ld   a, [wAud3Struct+AUD_Control]                               ; $6ce1
 	bit  7, a                                                       ; $6ce4
@@ -1848,6 +1986,7 @@ UpdateMusic:
 
 ; no wav sound effect in play, clear enable and re-enable
 	xor  a                                                          ; $6ce8
+; #MD OK?
 	ldh  [c], a                                                     ; $6ce9
 	ld   a, $80                                                     ; $6cea
 	ldh  [c], a                                                     ; $6cec
@@ -1869,10 +2008,12 @@ UpdateMusic:
 	jr   .fromWav                                                   ; $6cf6
 
 .startWritingToSq2:
+; #MD: Load NR21 for afterChoosingSndChannelBaseReg : OK
 	ld   c, LOW(rAUD2LEN)                                           ; $6cf8
 	jr   .afterChoosingSndChannelBaseReg                            ; $6cfa
 
 .startWritingToSq1:
+; #MD: Load NR11 for afterChoosingSndChannelBaseReg : OK
 	ld   c, LOW(rAUD1LEN)-1                                         ; $6cfc
 	ld   a, $00                                                     ; $6cfe
 	inc  c                                                          ; $6d00
@@ -1927,21 +2068,94 @@ UpdateMusic:
 
 ; here we start writing to sound regs
 ; D in 1st (len)
+; #MD: NR11 / NR21 / NR31 / NR41
+;   NR11 loaded at: $6cfc (OK)
+;   NR21 loaded at: $6cf8 (OK)
+;   NR31 loaded at: $6cdf (OK?)
+;   NR41 loaded at: $6ccc (OK?)
 	ld   a, d                                                       ; $6d21
 	ldh  [c], a                                                     ; $6d22
-	inc  c                                                          ; $6d23
 
 ; E in 2nd (env)
+; C points to NRx2
+	inc  c                                                          ; $6d23
 	ld   a, e                                                       ; $6d24
-	ldh  [c], a                                                     ; $6d25
-	inc  c                                                          ; $6d26
 
-; aud frequency (dfx9, dfxa) in 3rd (freq lo) and 4th (freq hi)
+; #MD Handles writes (NR12, NR13) or (NR22,NR23) or (NR32,NR33)	or (NR42,NR43)
+IF DEF(TARGET_MEGADUCK)
+	; C is lower byte of register address
+
+	; Handle CH4 separate from CH1,CH2,CH3
+	; Bit 6 only set on rNR42 addr lower byte for MegaDuck
+	bit 6, c
+	jr z, .duck_load_CH1_CH2_CH3
+
+	; Handle NR42..NR43 for Mega Duck
+	; - Reg address order swapped NR42 -> NR43 to NR43 -> NR42
+	; - Nybble swap for both NR42 & NR43
+	.duck_load_ch4_env_then_poly_seq_fix:
+		; Skip forward to NR42 (0xFF42) [would otherwise point to FF41]
+		inc  c
+		swap a
+		ldh  [c], a                                                     ; Equiv: $6d25
+
+		; Roll back to NR43 (0xFF41)
+		dec  c
+		ld   a, [hl]
+		swap a
+		ldh  [c], a                                                     ; Equiv: $6d28
+
+		; Get back to alignment with CH1/2/3: Skip C forward to NR44 (0xFF43)
+		inc  c
+		inc  c
+		jr .duck_load_NRx2_NRx3_done
+
+
+	; Loads one of (NR12, NR13) or (NR22,NR23) or (NR32,NR33)
+	.duck_load_CH1_CH2_CH3:
+
+	; Bit 3 only set on rNR32 addr lower byte for MegaDuck
+	bit 3, c
+	jr z, .duck_load_NR12_NR22_envfix
+
+	; NR32: Translate volume. New Volume = ((0x00 - Volume) & 0x60)
+	; GB: Bits:6..5 : 00 = mute, 01 = 100%, 10 = 50%, 11 = 25%
+	; MD: Bits:6..5 : 00 = mute, 11 = 100%, 10 = 50%, 01 = 25%
+	.duck_load_NR33_volfix:
+		cpl
+		add $20 ; start bit rollover at bit 5 to ignore possible values in lower bits (vs add 1)
+		and $60
+		jr .duck_load_NRx2
+
+	; NR12 / NR22 : Need to nybble swap output
+	.duck_load_NR12_NR22_envfix:
+		swap a
+
+	; NRx2 (NR12,NR22,NR32)
+	.duck_load_NRx2:
+		ldh  [c], a                                                     ; Equiv: $6d25
+
+	; NRx3 (NR13,NR23,NR33)
+		inc  c
+		ld   a, [hl]
+		ldh  [c], a                                                     ; Equiv: $6d28
+		inc  c
+	; C should now point to NRx4 for the channel being updated
+
+	.duck_load_NRx2_NRx3_done:
+ELSE
+	; NRx2
+	ldh  [c], a                                                     ; $6d25
+
+	; NRx3
+	inc  c                                                          ; $6d26
 	ld   a, [hl+]                                                   ; $6d27
 	ldh  [c], a                                                     ; $6d28
 	inc  c                                                          ; $6d29
+ENDC
 
 ; freq hi bit 7 set (sound restarts)
+; #MD: NR14 / NR24 / NR34 / NR44 OK?
 	ld   a, [hl]                                                    ; $6d2a
 	or   $80                                                        ; $6d2b
 	ldh  [c], a                                                     ; $6d2d
@@ -2101,10 +2315,12 @@ WriteToFrequencyRegsAdjustedWithEnvelope:
 
 .end:
 ; pop frequency, adjust with hl, and write to regs
+; #MD NR13,NR23,NR33 OK?
 	pop  de                                                         ; $6dc2
 	add  hl, de                                                     ; $6dc3
 	ld   a, l                                                       ; $6dc4
 	ldh  [c], a                                                     ; $6dc5
+; #MD NR14,NR24,NR34 OK?
 	inc  c                                                          ; $6dc6
 	ld   a, h                                                       ; $6dc7
 	ldh  [c], a                                                     ; $6dc8
@@ -2114,11 +2330,17 @@ WriteToFrequencyRegsAdjustedWithEnvelope:
 INCLUDE "data/songData.s"
 
 
-SECTION "Sound Thunk Funcs", ROMX[$7ff0], BANK[$1]
+IF DEF(TARGET_MEGADUCK)
+	; #MD Free up a little space by relocating these to empty
+	; space where the Header would be on a real Game Boy
+	; $104 - $109: 6 bytes
+	SECTION "Sound Thunk Funcs", ROM0[$104]
+ELSE
+	SECTION "Sound Thunk Funcs", ROMX[$7ff0], BANK[$1]
+ENDC
+	ThunkUpdateSound::
+		jp   UpdateSound                                                ; $7ff0
 
-ThunkUpdateSound::
-	jp   UpdateSound                                                ; $7ff0
 
-
-ThunkInitSound::
-	jp   InitSound                                                  ; $7ff3
+	ThunkInitSound::
+		jp   InitSound                                                  ; $7ff3
