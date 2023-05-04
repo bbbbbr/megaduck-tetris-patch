@@ -1071,6 +1071,7 @@ DEF OAMB_BANK1      EQU 3 ; Bank number; 0,1 (GBC)
 ;* (if next lines are altered.)
 MACRO NINTENDO_LOGO
 if def(TARGET_MEGADUCK)
+; No header logo
 else
     DB  $CE,$ED,$66,$66,$CC,$0D,$00,$0B,$03,$73,$00,$83,$00,$0C,$00,$0D
     DB  $00,$08,$11,$1F,$88,$89,$00,$0E,$DC,$CC,$6E,$E6,$DD,$DD,$D9,$99
