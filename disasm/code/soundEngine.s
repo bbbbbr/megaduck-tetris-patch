@@ -2091,7 +2091,7 @@ IF DEF(TARGET_MEGADUCK)
 	jr z, .duck_load_CH1_CH2_CH3
 
 	; Handle NR42..NR43 for Mega Duck
-	; - Reg address order swapped NR42 -> NR43 to NR43 -> NR42
+	; - Reg address order swapped from NR42 -> NR43 to NR43 -> NR42
 	; - Nybble swap for both NR42 & NR43
 	.duck_load_ch4_env_then_poly_seq_fix:
 		; Skip forward to NR42 (0xFF42) [would otherwise point to FF41]
@@ -2121,7 +2121,7 @@ IF DEF(TARGET_MEGADUCK)
 	; NR32: Translate volume. New Volume = ((0x00 - Volume) & 0x60)
 	; GB: Bits:6..5 : 00 = mute, 01 = 100%, 10 = 50%, 11 = 25%
 	; MD: Bits:6..5 : 00 = mute, 11 = 100%, 10 = 50%, 01 = 25%
-	.duck_load_NR33_volfix:
+	.duck_load_NR32_volfix:
 		cpl
 		add $20 ; start bit rollover at bit 5 to ignore possible values in lower bits (vs add 1)
 		and $60
