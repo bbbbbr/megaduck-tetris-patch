@@ -80,5 +80,10 @@ megaduck:
 cleanduck:
 	${MAKE} BUILD_MEGADUCK=ON EXTRA_BUILD_PATH=_duck clean
 
+# Needs stock inside gadgets firmware to work, can use flashgbx ui to swap it out if needed
+# Make sure 32K cart is specified
+flashduck:
+	-cd tools/gbxcart_duck; ./gbxcart_rw_megaduck_32kb_flasher ../../build_duck/tetris.duck &
+
 
 
