@@ -3,7 +3,7 @@ INCLUDE "includes.s"
 IF DEF(TARGET_MEGADUCK)
     ; #MD Move sound engine up a little to use space
     ; reclaimed by moving "Demo Pieces" to the Header area
-	SECTION "Sound Engine", ROMX[$6450], BANK[$1]
+	SECTION "Sound Engine", ROMX[$6430], BANK[$1]
 ELSE
 	SECTION "Sound Engine", ROMX[$6480], BANK[$1]
 ENDC
@@ -508,24 +508,38 @@ SquareEffectUpdate_Non4LinesCleared:
 	ld   b, $86                                                     ; $66df
 
 SetAud1EnvLowHighToEDB:
+; #MD NR12,NR13,NR14 OK?
+; Handle register address order changed from NR11..NR12 to NR12..NR11
+;     which breaks expectation of writes in sequential order.
+;     Solve it by using direct writes to registers instead
+IF DEF(TARGET_MEGADUCK)
+	ld   a, e
+	; #MD NR12: Need to nybble swap output
+	swap a
+	ldh [rAUD1ENV], a
+
+	; #MD NR12 OK
+	ld   a, d
+	ldh  [rNR12], a
+
+	; #MD NR13 OK
+	ld   a, b
+	ldh  [rNR13], a
+	ret
+ELSE
 	ld   c, LOW(rAUD1ENV)                                           ; $66e1
 	ld   a, e                                                       ; $66e3
-; #MD NR12 OK?
-IF DEF(TARGET_MEGADUCK)
-	; NR12: Need to nybble swap output
-	swap a
-ENDC
 	ldh  [c], a                                                     ; $66e4
+
 	inc  c                                                          ; $66e5
 	ld   a, d                                                       ; $66e6
-
-; #MD NR13 OK?
 	ldh  [c], a                                                     ; $66e7
+
 	inc  c                                                          ; $66e8
 	ld   a, b                                                       ; $66e9
-; #MD NR14 OK?
 	ldh  [c], a                                                     ; $66ea
 	ret                                                             ; $66eb
+ENDC
 
 
 Aud1RegValsInit_PieceRotated:
@@ -1045,9 +1059,13 @@ SetInitialRegValuesHLForSoundEffect_UpdateDelayA:
 	ret                                                             ; $6955
 
 
+; #MD Handles register address order changes for all channels
+;     which breaks expectation of writes in sequential order.
+;     Solve it by using direct writes to registers instead
 IF DEF(TARGET_MEGADUCK)
 																	; Formerly 6956-6977
 	CopyDefaultValsInHLIntoAud1Regs:
+		; Writes NR10 -> NR14 (5)
 		ld   a, [hl+]
 		ldh  [rNR10], a
 
@@ -1066,8 +1084,8 @@ IF DEF(TARGET_MEGADUCK)
 		ldh  [rNR14], a
 		ret
 
-	; #MD: This block might never get called? Could just be a RET?
 	CopyDefaultValsInHLIntoAud2Regs:
+		; Writes NR21 -> NR24 (4)
 		ld   a, [hl+]
 		ldh  [rNR21], a
 
@@ -1080,12 +1098,12 @@ IF DEF(TARGET_MEGADUCK)
 		ldh  [rNR23], a
 
 		ld   a, [hl+]
-		ldh  [rNR14], a
+		ldh  [rNR24], a
 		ret
-
 
 	; #MD: This block might never get called? Could just be a RET?
 	CopyDefaultValsInHLIntoAud3Regs:
+		; Writes NR30_REG -> NR34 (5)
 		ld   a, [hl+]
 		ldh  [rNR30], a
 
@@ -1108,8 +1126,8 @@ IF DEF(TARGET_MEGADUCK)
 		ldh  [rNR34], a
 		ret
 
-
 	CopyDefaultValsInHLIntoAud4Regs:
+		; Writes NR41 -> NR44 (4)
 		ld   a, [hl+]
 		ldh  [rNR41], a
 
@@ -1128,6 +1146,7 @@ IF DEF(TARGET_MEGADUCK)
 		ret
 ELSE
 	CopyDefaultValsInHLIntoAud1Regs:
+		; Writes NR10 -> NR14 (5)
 		push bc                                                         ; $6956
 		ld   c, LOW(rAUD1SWEEP)                                         ; $6957
 		ld   b, rAUD1HIGH-rAUD1SWEEP+1                                  ; $6959
@@ -1135,6 +1154,7 @@ ELSE
 
 
 	CopyDefaultValsInHLIntoAud2Regs:
+		; Writes NR21 -> NR24 (4)
 		push bc                                                         ; $695d
 		ld   c, LOW(rAUD2LEN)                                           ; $695e
 		ld   b, rAUD2HIGH-rAUD2LEN+1                                    ; $6960
@@ -1142,6 +1162,7 @@ ELSE
 
 
 	CopyDefaultValsInHLIntoAud3Regs:
+		; Writes NR30_REG -> NR34 (5)
 		push bc                                                         ; $6964
 		ld   c, LOW(rAUD3ENA)                                           ; $6965
 		ld   b, rAUD3HIGH-rAUD3ENA+1                                    ; $6967
@@ -1149,6 +1170,7 @@ ELSE
 
 
 	CopyDefaultValsInHLIntoAud4Regs:
+		; Writes NR41 -> NR44 (4)
 		push bc                                                         ; $696b
 		ld   c, LOW(rAUD4LEN)                                           ; $696c
 		ld   b, rAUD4GO-rAUD4LEN+1                                      ; $696e
@@ -1960,7 +1982,7 @@ UpdateMusic:
 	jr   nz, .noiseLoop                                             ; $6cca
 
 ; starting hw reg
-; #MD: Load NR41 for afterChoosingSndChannelBaseReg : OK?
+; #MD: Load NR41 for afterChoosingSndChannelBaseReg : OK
 	ld   c, LOW(rAUD4LEN)                                           ; $6ccc
 	ld   hl, wAud4Struct+AUD_AddressOfSoundData                     ; $6cce
 	jr   .afterChoosingSndChannelBaseReg                            ; $6cd1
@@ -1978,7 +2000,7 @@ UpdateMusic:
 	jr   z, .startWritingToSq2                                      ; $6cdd
 
 ; is wave
-; #MD: Load NR31 OK?
+; #MD: Load NR30 OK
 	ld   c, LOW(rAUD3ENA)                                           ; $6cdf
 	ld   a, [wAud3Struct+AUD_Control]                               ; $6ce1
 	bit  7, a                                                       ; $6ce4
@@ -1986,13 +2008,14 @@ UpdateMusic:
 
 ; no wav sound effect in play, clear enable and re-enable
 	xor  a                                                          ; $6ce8
-; #MD OK?
+; #MD OK (NR30)
 	ldh  [c], a                                                     ; $6ce9
 	ld   a, $80                                                     ; $6cea
 	ldh  [c], a                                                     ; $6cec
 
 .contWave:
 ; go to wav len
+; #MD NR31 OK
 	inc  c                                                          ; $6ced
 
 ; go to wav struct len (dfx8)
@@ -2014,9 +2037,16 @@ UpdateMusic:
 
 .startWritingToSq1:
 ; #MD: Load NR11 for afterChoosingSndChannelBaseReg : OK
+; Handle changed register address order
+IF DEF(TARGET_MEGADUCK)
+	ld   c, LOW(rAUD1LEN)
+	ld   a, $00
+ELSE
+	; #MD Why not just load as LOW(rNR11) directly? why extra inc c?
 	ld   c, LOW(rAUD1LEN)-1                                         ; $6cfc
 	ld   a, $00                                                     ; $6cfe
 	inc  c                                                          ; $6d00
+ENDC
 
 .afterChoosingSndChannelBaseReg:
 ; to high byte of wav ram address (dfx7), it's 0 if non-wav
@@ -2025,7 +2055,11 @@ UpdateMusic:
 	inc  l                                                          ; $6d03
 	ld   a, [hl-]                                                   ; $6d04
 	and  a                                                          ; $6d05
+IF DEF(TARGET_MEGADUCK)
+	jp   nz, .hasWavRam                                             ; $6d06
+ELSE
 	jr   nz, .hasWavRam                                             ; $6d06
+ENDC
 
 ; aud env for non-wav from (dfx6)
 	ld   a, [hl+]                                                   ; $6d08
@@ -2066,99 +2100,128 @@ UpdateMusic:
 	bit  7, a                                                       ; $6d1d
 	jr   nz, .skippingHwRegWrites                                   ; $6d1f
 
+
 ; here we start writing to sound regs
+; D in 1st (len), E in 2nd (env), then [HL], [HL+1] | $80
+;
+; CH1 comes from .startWritingToSq1
+; CH2 comes from .startWritingToSq2
+; CH3 comes from .getNonNoiseDataToWrite -> .contWave
+; CH4 comes from .noiseLoop
+
+; #MD: Writes sequence of NRx1(d),NRx2(e),NRx3([hl+]),NRx4([hl] | $80)
+;
+; #MD Handles register address order changes for all channels
+;     which breaks expectation of writes in sequential order.
+;     Solve it by using direct writes to registers instead
+
 ; D in 1st (len)
-; #MD: NR11 / NR21 / NR31 / NR41
-;   NR11 loaded at: $6cfc (OK)
-;   NR21 loaded at: $6cf8 (OK)
-;   NR31 loaded at: $6cdf (OK?)
-;   NR41 loaded at: $6ccc (OK?)
+; #MD: NR11 / NR21 / NR31 / NR41 OK
 	ld   a, d                                                       ; $6d21
 	ldh  [c], a                                                     ; $6d22
 
-; E in 2nd (env)
-; C points to NRx2
-	inc  c                                                          ; $6d23
-	ld   a, e                                                       ; $6d24
-
-; #MD Handles writes (NR12, NR13) or (NR22,NR23) or (NR32,NR33)	or (NR42,NR43)
 IF DEF(TARGET_MEGADUCK)
-	; C is lower byte of register address
+																	; Formerly 6d21-6d2d
+	; Select channel to load based on address lower byte in C (NRx1)
 
-	; Handle CH4 separate from CH1,CH2,CH3
-	; Bit 6 only set on rNR42 addr lower byte for MegaDuck
-	bit 6, c
-	jr z, .duck_load_CH1_CH2_CH3
+		; Bit 6 only set on rNR41 addr lower byte (0xFF40) for MegaDuck
+		bit 6, c
+		jr nz, .megaduck_load_nr42_to_nr43
 
-	; Handle NR42..NR43 for Mega Duck
-	; - Reg address order swapped from NR42 -> NR43 to NR43 -> NR42
-	; - Nybble swap for both NR42 & NR43
-	.duck_load_ch4_env_then_poly_seq_fix:
-		; Skip forward to NR42 (0xFF42) [would otherwise point to FF41]
-		inc  c
+		; Bit 3 only set on rNR31 addr lower byte (0xFF2B) for MegaDuck
+		bit 3, c
+		jr nz, .megaduck_load_nr32_to_nr33
+
+		; Bit 0 only set on rNR21 addr lower byte (0xFF25) for MegaDuck
+		bit 0, c
+		jr nz, .megaduck_load_nr22_to_nr23
+
+		; Otherwise drop through to rNR11 (0xFF22)
+
+		.megaduck_load_nr12_to_nr13:
+		; #MD swap nybbles for NR12
+		ld   a, e
 		swap a
-		ldh  [c], a                                                     ; Equiv: $6d25
+		ldh  [rNR12], a
 
-		; Roll back to NR43 (0xFF41)
-		dec  c
-		ld   a, [hl]
+		ld   a, [hl+]
+		ldh  [rNR13], a
+
+		; Prep next write
+		ld   c, LOW(rNR14)
+		jp .megaduck_load_nrx2_to_nrx3_done
+
+	.megaduck_load_nr22_to_nr23:
+		; #MD swap nybbles for NR22
+		ld   a, e
 		swap a
-		ldh  [c], a                                                     ; Equiv: $6d28
+		ldh  [rNR22], a
 
-		; Get back to alignment with CH1/2/3: Skip C forward to NR44 (0xFF43)
-		inc  c
-		inc  c
-		jr .duck_load_NRx2_NRx3_done
+		ld   a, [hl+]
+		ldh  [rNR23], a
 
+		; Prep next write
+		ld   c, LOW(rNR24)
+		jp .megaduck_load_nrx2_to_nrx3_done
 
-	; Loads one of (NR12, NR13) or (NR22,NR23) or (NR32,NR33)
-	.duck_load_CH1_CH2_CH3:
-
-	; Bit 3 only set on rNR32 addr lower byte for MegaDuck
-	bit 3, c
-	jr z, .duck_load_NR12_NR22_envfix
-
-	; NR32: Translate volume. New Volume = ((0x00 - Volume) & 0x60)
-	; GB: Bits:6..5 : 00 = mute, 01 = 100%, 10 = 50%, 11 = 25%
-	; MD: Bits:6..5 : 00 = mute, 11 = 100%, 10 = 50%, 01 = 25%
-	.duck_load_NR32_volfix:
+	.megaduck_load_nr32_to_nr33:
+		; #MD NR32: Translate volume. New Volume = ((0x00 - Volume) & 0x60)
+		; GB: Bits:6..5 : 00 = mute, 01 = 100%, 10 = 50%, 11 = 25%
+		; MD: Bits:6..5 : 00 = mute, 11 = 100%, 10 = 50%, 01 = 25%
+		ld   a, e
 		cpl
 		add $20 ; start bit rollover at bit 5 to ignore possible values in lower bits (vs add 1)
 		and $60
-		jr .duck_load_NRx2
+		ldh  [rNR32], a
 
-	; NR12 / NR22 : Need to nybble swap output
-	.duck_load_NR12_NR22_envfix:
+		ld   a, [hl+]
+		ldh  [rNR33], a
+
+		; Prep next write
+		ld   c, LOW(rNR34)
+		jp .megaduck_load_nrx2_to_nrx3_done
+
+	.megaduck_load_nr42_to_nr43:
+		; #MD swap nybbles for NR42
+		ld   a, e
 		swap a
+		ldh  [rNR42], a
 
-	; NRx2 (NR12,NR22,NR32)
-	.duck_load_NRx2:
-		ldh  [c], a                                                     ; Equiv: $6d25
+		; #MD swap nybbles for NR43
+		ld   a, [hl+]
+		swap a
+		ldh  [rNR43], a
 
-	; NRx3 (NR13,NR23,NR33)
-		inc  c
-		ld   a, [hl]
-		ldh  [c], a                                                     ; Equiv: $6d28
-		inc  c
-	; C should now point to NRx4 for the channel being updated
+		; Prep next write
+		ld   c, LOW(rNR44)
 
-	.duck_load_NRx2_NRx3_done:
+	.megaduck_load_nrx2_to_nrx3_done:
+	; C now has corrected MegaDuck NRx4 address low byte 
 ELSE
+
+; E in 2nd (env)
 	; NRx2
+	inc  c                                                          ; $6d23
+	ld   a, e                                                       ; $6d24
 	ldh  [c], a                                                     ; $6d25
 
 	; NRx3
 	inc  c                                                          ; $6d26
 	ld   a, [hl+]                                                   ; $6d27
 	ldh  [c], a                                                     ; $6d28
+
+	; Prep address for next write
 	inc  c                                                          ; $6d29
 ENDC
 
 ; freq hi bit 7 set (sound restarts)
-; #MD: NR14 / NR24 / NR34 / NR44 OK?
+; #MD: NR14 / NR24 / NR34 / NR44 OK
 	ld   a, [hl]                                                    ; $6d2a
 	or   $80                                                        ; $6d2b
 	ldh  [c], a                                                     ; $6d2d
+
+
+
 
 ; unused: control byte (dfxf), res bit 0
 	ld   a, l                                                       ; $6d2e
@@ -2206,8 +2269,11 @@ ENDC
 	push hl                                                         ; $6d59
 	pop  hl                                                         ; $6d5a
 	inc  l                                                          ; $6d5b
+IF DEF(TARGET_MEGADUCK)
+	jp   .after_hasWavRam                                           ; $6d5c
+ELSE
 	jr   .after_hasWavRam                                           ; $6d5c
-
+ENDC
 
 GetEinDEplusBdiv2:
 	ld   a, b                                                       ; $6d5e
@@ -2315,17 +2381,25 @@ WriteToFrequencyRegsAdjustedWithEnvelope:
 
 .end:
 ; pop frequency, adjust with hl, and write to regs
-; #MD NR13,NR23,NR33 OK?
+; #MD NR13,NR23,NR33 ADDR is OK (loaded with constants at WriteToFrequencyRegsAdjustedWithEnvelope)
 	pop  de                                                         ; $6dc2
 	add  hl, de                                                     ; $6dc3
 	ld   a, l                                                       ; $6dc4
 	ldh  [c], a                                                     ; $6dc5
-; #MD NR14,NR24,NR34 OK?
+
+; #MD Fix address scrambling for CH3 (NR33->NR34), CH1 & CH2 OK
+; #MD NR14,NR24,NR34
+	; Bit 2 only set on rNR33 addr lower byte (0xFF2E) for MegaDuck
+	bit 2, c
+	jr z, .megaduck_nr14_nr24_skip_nr34_addr_fix
+		; Fix c for NR34 (0xFF2D), factoring in next inc
+		dec c
+		dec c
+	.megaduck_nr14_nr24_skip_nr34_addr_fix:
 	inc  c                                                          ; $6dc6
 	ld   a, h                                                       ; $6dc7
 	ldh  [c], a                                                     ; $6dc8
 	jr   .done                                                      ; $6dc9
-
 
 INCLUDE "data/songData.s"
 
