@@ -24,18 +24,18 @@ RAM_OBJS = $(BUILD_PATH)/wram.o $(BUILD_PATH)/hram.o
 INCS = include/constants.s include/hardware.inc include/macros.s include/structs.s
 
 GFX_1BPP_OBJS = $(shell find gfx/1bpp/ -name '*.png' | sed "s/gfx\/1bpp/$(BUILD_PATH)/" | sed "s/.png/.1bpp/")
-GFX_2BPP_OBJS = $(shell find gfx/2bpp/ -name '*.png' | sed "s/gfx\/2bpp/$(BUILD_PATH)/" | sed "s/.png/.2bpp/")
+GFX_2BPP_OBJS = $(shell find gfx/2bpp$(EXTRA_BUILD_PATH)/ -name '*.png' | sed "s/gfx\/2bpp$(EXTRA_BUILD_PATH)/$(BUILD_PATH)/" | sed "s/.png/.2bpp/")
 OUTFILES = -n $(BUILD_PATH)/tetris.sym -m $(BUILD_PATH)/tetris.map
 
 all: $(BUILD_PATH)/tetris.gb
 
-$(BUILD_PATH)/titleScreen.2bpp: gfx/2bpp/titleScreen.png
+$(BUILD_PATH)/titleScreen.2bpp: gfx/2bpp$(EXTRA_BUILD_PATH)/titleScreen.png
 	$(RGBDS_PATH)rgbgfx -o $@ $< -x 9
 
-$(BUILD_PATH)/menuScreens.2bpp: gfx/2bpp/menuScreens.png
+$(BUILD_PATH)/menuScreens.2bpp: gfx/2bpp$(EXTRA_BUILD_PATH)/menuScreens.png
 	$(RGBDS_PATH)rgbgfx -o $@ $< -x 11
 
-$(BUILD_PATH)/%.2bpp: gfx/2bpp/%.png
+$(BUILD_PATH)/%.2bpp: gfx/2bpp$(EXTRA_BUILD_PATH)/%.png
 	$(RGBDS_PATH)rgbgfx -o $@ $<
 
 $(BUILD_PATH)/%.1bpp: gfx/1bpp/%.png
