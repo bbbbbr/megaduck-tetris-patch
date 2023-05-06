@@ -85,5 +85,6 @@ cleanduck:
 flashduck:
 	-cd ../tools/gbxcart_duck; ./gbxcart_rw_megaduck_32kb_flasher ../../disasm/build_duck/tetris.duck &
 
-
-
+createpatchduck:
+	mkdir -p ../patch
+	$(UPS_PATCHTOOL_PATH) diff --base ../tools/tetris.gb -modified build_duck/tetris.duck -output ../patch/tetris_megaduck_patch.ups &
