@@ -7,6 +7,7 @@ INCLUDE "includes.s"
 
 SECTION "ROM Bank $000", ROM0[$0]
 
+; MegaDuck Entry point, conviently already jumps to startup
 RST_00::
 	jp   Begin2                                                     ; $0000
 
@@ -176,40 +177,85 @@ Boot::
 	nop                                                             ; $0100
 	jp   Begin                                                      ; $0101
 
-	
-SECTION "Header", ROM0[$134]
 
-	setcharmap main
+IF DEF(TARGET_MEGADUCK)
+	; MegaDuck does not have a header
+	; which frees up a little space for other code
 
-HeaderTitle::
-	db   "TETRIS", $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+	; $104 - $109: 6 bytes
+	; SECTION "Sound Thunk Funcs", ROM0[$104]
 
-	setcharmap new
+    ; $10A - $139: 48 bytes
+    ; SECTION "Demo Pieces", ROM0[$10A]
 
-HeaderNewLicenseeCode::
-	db   $00, $00
+    ; $12A - $148: 15 bytes
+    SECTION "SoundInit", ROM0[$13A]
 
-HeaderSGBFlag::
-	db   $00
+	; #MD: Sequence below writes NR52, NR51, NR50 in order
+	; Moved to header since it was one byte too long in original location
+	; Megaduck has reg address order swapped for (NR51 and NR52)
+	; So HL inc/dec order zigzags a bit
+	soundInitMegaDuck::
 
-HeaderCartridgeType::
-	db   $00
+		; #MD NR52 OK
+		; all sound on
+		ld   hl, rAUDENA
+		ld   a, $80
+		ld   [hl+], a
 
-HeaderROMSize::
-	db   $00
+		; #MD NR51
+		; channels outputted to all sound S01 and S02
+		ld   a, $ff
+		ld   [hl-], a
+		dec  hl
 
-HeaderRAMSize::
-	db   $00
+		; #MD NR50
+		; vol max without setting vin
+		ld   [hl], $77
 
-HeaderDestinationCode::
-	db   $00
+		jp soundInitMegaDuck_Done
 
-HeaderOldLicenseeCode::
-	db   $01
 
-HeaderMaskROMVersion::
-	db   $01
+	; $149 - $14F
+	; Unused
 
+		setcharmap main
+
+		setcharmap new
+ELSE
+	SECTION "Header", ROM0[$134]
+
+		setcharmap main
+
+	HeaderTitle::
+		db   "TETRIS", $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+
+		setcharmap new
+
+	HeaderNewLicenseeCode::
+		db   $00, $00
+
+	HeaderSGBFlag::
+		db   $00
+
+	HeaderCartridgeType::
+		db   $00
+
+	HeaderROMSize::
+		db   $00
+
+	HeaderRAMSize::
+		db   $00
+
+	HeaderDestinationCode::
+		db   $00
+
+	HeaderOldLicenseeCode::
+		db   $01
+
+	HeaderMaskROMVersion::
+		db   $01
+ENDC
 
 SECTION "Begin", ROM0[$150]
 
@@ -417,6 +463,11 @@ Reset:
 	ld   a, %11000100                                               ; $0243
 	ldh  [rOBP1], a                                                 ; $0245
 
+IF DEF(TARGET_MEGADUCK)
+	jp soundInitMegaDuck
+
+soundInitMegaDuck_Done::
+ELSE
 ; all sound on
 	ld   hl, rAUDENA                                                ; $0247
 	ld   a, $80                                                     ; $024a
@@ -428,6 +479,7 @@ Reset:
 
 ; vol max without setting vin
 	ld   [hl], $77                                                  ; $0250
+ENDC
 
 ; set rom bank for some reason, and set SP
 	ld   a, $01                                                     ; $0252

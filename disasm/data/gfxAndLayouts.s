@@ -1,7 +1,11 @@
 SECTION "Graphics and Layouts", ROM0[$323f]
 
 Gfx_MenuScreens:
-	INCBIN "build/menuScreens.2bpp"
+IF DEF(TARGET_MEGADUCK)
+	INCBIN "build_duck/menuScreens.2bpp"
+ELSE
+    INCBIN "build/menuScreens.2bpp"
+ENDC
 .end:
 
 Layout_ATypeInGame:
@@ -11,17 +15,25 @@ STATIC_ASSERT $4000-@ == BANK_0_END_LEN
 Layout_BTypeInGame::
 	INCBIN "data/layout_bTypeInGame.bin", 0, $4000-@
 
-    
+
 SECTION "ROM Bank $001", ROMX[$4000], BANK[$1]
 
 	INCBIN "data/layout_bTypeInGame.bin", BANK_0_END_LEN
 
 Gfx_Ascii::
-	INCBIN "build/ascii.1bpp"
+IF DEF(TARGET_MEGADUCK)
+	INCBIN "build_duck/ascii.1bpp"
+ELSE
+    INCBIN "build/ascii.1bpp"
+ENDC
 .end::
-	
+
 Gfx_TitleScreen::
-	INCBIN "build/titleScreen.2bpp"
+IF DEF(TARGET_MEGADUCK)
+	INCBIN "build_duck/titleScreen.2bpp"
+ELSE
+    INCBIN "build/titleScreen.2bpp"
+ENDC
 .end::
 
 Layout_Copyright::
@@ -58,5 +70,9 @@ Layout_BricksAndLuigiScore::
 	INCBIN "data/layout_bricksAndLuigiScore.bin"
 
 Gfx_RocketScene::
-	INCBIN "build/rocketScene.2bpp"
+IF DEF(TARGET_MEGADUCK)
+	INCBIN "build_duck/rocketScene.2bpp"
+ELSE
+    INCBIN "build/rocketScene.2bpp"
+ENDC
 .end::
