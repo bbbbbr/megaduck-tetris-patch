@@ -191,27 +191,27 @@ IF DEF(TARGET_MEGADUCK)
     ; $12A - $148: 15 bytes
     SECTION "SoundInit", ROM0[$13A]
 
-	; #MD: Sequence below writes NR52, NR51, NR50 in order
+	; #MD: Sequence below writes NR52, NR51, NR50 in order: OK
+	;
 	; Moved to header since it was one byte too long in original location
 	; Megaduck has reg address order swapped for (NR51 and NR52)
-	; So HL inc/dec order zigzags a bit
+	; So just load using constants managed by hardware.inc
 	soundInitMegaDuck::
 
 		; #MD NR52 OK
 		; all sound on
-		ld   hl, rAUDENA
 		ld   a, $80
-		ld   [hl+], a
+		ldh  [rAUDENA], a
 
-		; #MD NR51
 		; channels outputted to all sound S01 and S02
 		ld   a, $ff
-		ld   [hl-], a
-		dec  hl
+		ldh  [rNR51], a
 
-		; #MD NR50
 		; vol max without setting vin
-		ld   [hl], $77
+		ld   a, $77
+		ldh  [rNR50], a
+
+		; value previously remaining in hl was *not* relied on further below, no need to load it
 
 		jp soundInitMegaDuck_Done
 
@@ -463,10 +463,11 @@ Reset:
 	ld   a, %11000100                                               ; $0243
 	ldh  [rOBP1], a                                                 ; $0245
 
+; #MD NR52,NR51,NR50 OK
 IF DEF(TARGET_MEGADUCK)
 	jp soundInitMegaDuck
-
-soundInitMegaDuck_Done::
+	soundInitMegaDuck_Done::
+	; remaining value in hl is *not* relied on further below
 ELSE
 ; all sound on
 	ld   hl, rAUDENA                                                ; $0247
