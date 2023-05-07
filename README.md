@@ -10,6 +10,9 @@ It's a modified version of the [dissasembly by vinheim3](https://github.com/vinh
 
 Most of the work for this port was in adapting the Tetris music and sfx driver to accommodate the shuffled APU register addresses and bit values. Changes for constants can be found in the `hardware.inc`.
 
+### Download
+Available in the [Releases section](https://github.com/bbbbbr/megaduck-tetris-patch/releases) of this repo, or at [RHDN](https://www.romhacking.net/hacks/7771/).
+
 ### Playing on console hardware:
 As with unmodified Tetris this is meant to run on a bare 32K cart with no save RAM and no MBC. For now [Inside Gadgets](https://shop.insidegadgets.com/product/megaduck-32kb-flash-cart) and [A2 Heaven](http://www.a2heaven.com/webshop/index.php?rt=product/product&product_id=172) are probably the only compatible flash cartridges. If needed there are [3D printable cart shells](https://github.com/bbbbbr/megaduck_cartridge_shell).
 
